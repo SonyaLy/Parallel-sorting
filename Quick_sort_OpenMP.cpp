@@ -37,7 +37,7 @@ int partition(int arr[], int start, int end)
 }
 
 // Функция для выполнения quicksort c использованием openmp
-void quicksort(int arr[], int start, int end)
+void quicksort(int arr[], int start, int end, int n)
 {
 	if (start < end) {
 
@@ -45,17 +45,17 @@ void quicksort(int arr[], int start, int end)
 		int index = partition(arr, start, end);
 
 		// Параллельная секция
-#pragma omp parallel sections
+#pragma omp parallel sections num_threads(n)
 		{
 #pragma omp section
 			{
 				// Левая половина
-				quicksort(arr, start, index - 1);
+				quicksort(arr, start, index - 1, n);
 			}
 #pragma omp section
 			{
 				// Правая половина
-				quicksort(arr, index + 1, end);
+				quicksort(arr, index + 1, end, n);
 			}
 		}
 	}
@@ -66,6 +66,9 @@ int main(int argc, char* argv[])
 	float time_use = 0;
 	struct timeval start_time;
 	struct timeval end_time;
+
+	int n = atoi(argv[1]);
+	//omp_set_num_threads(n);
 	
 	FILE* open_file = fopen("input.txt", "r+");
 	if (open_file)
@@ -83,7 +86,7 @@ int main(int argc, char* argv[])
 	gettimeofday(&start_time, NULL);
 	
 	// Вызов быстрой сортировки с параллельной реализацией
-	quicksort(arr, 0, arr_volume - 1);
+	quicksort(arr, 0, arr_volume - 1, n);
 
 	gettimeofday(&end_time, NULL);
 	time_use = (end_time.tv_sec - start_time.tv_sec) * 1000000 + (end_time.tv_usec - start_time.tv_usec);
@@ -94,7 +97,7 @@ int main(int argc, char* argv[])
 		fprintf(close_file, "%d ", arr[i]);
 	
 	printf("Quicksort %d ints on %d procs: %lf secs\n",
-		arr_volume, omp_get_num_procs(), time_use / 1000000);
+		arr_volume, n, time_use / 1000000);
 
 	return 0;
 }
