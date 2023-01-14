@@ -43,8 +43,9 @@ void quicksort(int arr[], int start, int end, int n)
 
 		// Получение индекса pivot путем разделения
 		int index = partition(arr, start, end);
+		//printf("%d", omp_get_num_threads());
 
-		// Параллельная секция
+		/*// Параллельная секция
 #pragma omp parallel sections num_threads(n)
 		{
 #pragma omp section
@@ -57,7 +58,12 @@ void quicksort(int arr[], int start, int end, int n)
 				// Правая половина
 				quicksort(arr, index + 1, end, n);
 			}
-		}
+		}*/
+
+#pragma omp task
+		quicksort(arr, start, index - 1, n);
+#pragma omp task
+		quicksort(arr, index + 1, end, n);
 	}
 }
 
@@ -69,6 +75,9 @@ int main(int argc, char* argv[])
 
 	int n = atoi(argv[1]);
 	//omp_set_num_threads(n);
+	//int n = get_number_of_threads(argc, argv);
+	omp_set_dynamic(0);
+	omp_set_num_threads(n);
 	
 	FILE* open_file = fopen("input.txt", "r+");
 	if (open_file)
@@ -86,7 +95,12 @@ int main(int argc, char* argv[])
 	gettimeofday(&start_time, NULL);
 	
 	// Вызов быстрой сортировки с параллельной реализацией
-	quicksort(arr, 0, arr_volume - 1, n);
+	
+#pragma omp parallel
+	{
+#pragma omp single
+		quicksort(arr, 0, arr_volume - 1, n);
+	}
 
 	gettimeofday(&end_time, NULL);
 	time_use = (end_time.tv_sec - start_time.tv_sec) * 1000000 + (end_time.tv_usec - start_time.tv_usec);
